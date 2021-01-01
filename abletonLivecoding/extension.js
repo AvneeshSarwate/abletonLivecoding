@@ -1,6 +1,39 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 const vscode = require('vscode');
+const osc = require('osc');
+
+
+const udpPort = new osc.UDPPort({
+    // This is the port we're listening on.
+    localAddress: "127.0.0.1",
+    localPort: 2346,
+
+    // This is where sclang is listening for OSC messages.
+    remoteAddress: "127.0.0.1",
+    remotePort: 57120,
+    metadata: true
+});
+
+function sendString(clipString){
+	udpPort.send({
+		address: "/clipInfo", 
+		args: [
+			{
+				type: "s",
+				value: clipString
+			}
+		]});
+}
+
+udpPort.on('message', oscMessage => {
+	console.log("osc message", oscMessage)
+	sendString(oscMessage.args[2].value)
+})
+
+
+udpPort.open();
+
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
