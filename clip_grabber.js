@@ -1,5 +1,5 @@
 inlets = 3;
-outlets = 3
+outlets = 4;
 
 
 
@@ -63,7 +63,8 @@ function attachNoteObserverToClip(clipPath) {
 		
 		outlet(0, this.get('name'));
 		outlet(1, this.id);
-		outlet(2, noteString);
+		outlet(2, end);
+		outlet(3, noteString);
 	}
 	
 	var clip = new LiveAPI(noteListener, clipPath);
