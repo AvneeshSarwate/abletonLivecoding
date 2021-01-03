@@ -27,29 +27,42 @@ function sceneListenerCallback(args) {
 }
 
 
-function getClipNotesByName(args) {
+function getClipNotesByName(clipName) {
 	for(var i = 0; i < numTracks; i++) {
 		for(var j = 0; j < numScenes; j++) {
-			
+			var retVal = getClipByGridPos(i, j, clipName)
+			if(retVal) {
+				var clip = retVal.clip;
+				var clipPath = retVal.path;
+				if(!clipsBeingTracked[clip.id]) {
+					clipsBeingTracked[clip.id] = true;
+ 					attachNoteObserverToClip(clipPath);
+				}
+			}
 		}
 	}
 }
 
-function getClipByGridPos(trackNum, sceneNum) {
+
+function getClipByGridPos(trackNum, sceneNum, clipName) {
 	var slotPath = "live_set tracks " + trackNum + " clip_slots " + sceneNum;
 	var clipPath = slotPath + " clip";
 	var slot = new LiveAPI(slotPath);
 	var clip = new LiveAPI(clipPath);
 	if(slot.get('has_clip') == 1) {
 		post("clip name", clip.get('name'), "id", clip.id, "\n");
-		if(!clipsBeingTracked[clip.id]) {
+		/*if(!clipsBeingTracked[clip.id]) {
 			clipsBeingTracked[clip.id] = true;
  			attachNoteObserverToClip(clipPath);
+		}*/
+		if(clip.get('name') == clipName) {
+			return {clip: clip, path: clipPath};
 		}
 
 	} else {
 		post("no clip in that slot \n");
 	}
+	return false;
 }
 
 function attachNoteObserverToClip(clipPath) {
