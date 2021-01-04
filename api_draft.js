@@ -22,6 +22,7 @@ channels("perc1").play(function(state, history, out, info, c){
     let final2 = c`${root} ${final}`;
 
     //can be note on/off, or even midi CC
+    //play function body must add the "end" event to signal buffer duration
     out(final)
     state.count++
 });

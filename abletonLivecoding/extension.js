@@ -3,6 +3,31 @@
 const vscode = require('vscode');
 const osc = require('osc');
 
+const clips = {};
+const channels = {};
+
+class Channel {
+
+	constructor(channelName) {
+		this.channelName = channelName;
+		channels[channelName] = this;
+	}
+
+	playFunction() {}
+
+	play(playFunction) {
+		//play function body must add the "end" event to signal buffer duration
+		if(playFunction) this.playFunction = playFunction
+
+		//call this.playFunction and send buffer 
+
+		//add "update" event to request next buffer of events before play finishes
+	}
+
+	register(playFunction) {
+		this.playFunction = playFunction
+	}
+}
 
 const udpPort = new osc.UDPPort({
     // This is the port we're listening on.
@@ -15,21 +40,37 @@ const udpPort = new osc.UDPPort({
     metadata: true
 });
 
-function sendString(clipString){
-	udpPort.send({
-		address: "/clipInfo", 
-		args: [
-			{
-				type: "s",
-				value: clipString
-			}
-		]});
+function sendMsg(addr, args){
+	let typedArgs = args.map(a => {
+		return {
+			value: a,
+			type: typeof a == "string" ? "s" : "f"
+		}
+	});
+	udpPort.send({address: addr, args: typedArgs});
+}
+
+function getClip(clipName){
+	sendMsg("/getClip", [clipName])
 }
 
 udpPort.on('message', oscMessage => {
 	console.log("osc message", oscMessage)
 	sendString(oscMessage.args[2].value)
-})
+	let {address, args} = oscMessage;
+	switch(address) {
+		case '/clipNotes':
+			clips[args[0]] = oscMessage.args
+			break;
+		case '/channelUpdate':
+			//call something like channels[args[0]].playFunction({all the variables the playfunction gets})
+	}
+});
+
+function formatNoteList(noteListString) {
+	let noteList = JSON.parse(noteList);
+	//add "end" event to allow silent space after last midi event
+}
 
 
 udpPort.open();
