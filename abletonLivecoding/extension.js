@@ -11,6 +11,14 @@ class Channel {
 	constructor(channelName) {
 		this.channelName = channelName;
 		channels[channelName] = this;
+		this.state = {};
+		this.history = [];
+		this.channelInfo = {};
+		this.midiInfo = {
+			device: "loopMIDI Port",
+			port: "loopMIDI Port",
+			channel: 0
+		}
 	}
 
 	playFunction() {}
@@ -18,15 +26,47 @@ class Channel {
 	play(playFunction) {
 		//play function body must add the "end" event to signal buffer duration
 		if(playFunction) this.playFunction = playFunction
+		this.callPlay();
+	}
 
-		//call this.playFunction and send buffer 
+	callPlay() {
+		this.playFunction(this.state, this.history, this.out, this.channelInfo, a => a)
+	}
 
+	out(eventBuffer) {
+		this.history.push(eventBuffer);
 		//add "update" event to request next buffer of events before play finishes
+		sendMsg("/scheduleBuffer", [this.channelName, JSON.stringify(eventBuffer)]);
 	}
 
 	register(playFunction) {
 		this.playFunction = playFunction
 	}
+
+	updateInfo(superColliderInfoJson) {
+		this.channelInfo = JSON.parse(superColliderInfoJson);
+	}
+
+	stop() {
+
+	}
+}
+
+function channel(channelStr, midiChan = 0, midiDevice = "loopMIDI Port", midiPort = "loopMIDI Port"){
+	if(channels[channelStr]) return channels[channelStr];
+
+	sendMsg("/initChannel", [midiDevice, midiPort, midiChan]);
+
+	channels[channelStr] = new Channel(channelStr);
+	channels[channelStr].midiInfo = {
+		device: midiDevice, 
+		port: midiPort,
+		channel: midiChan
+	};
+
+
+
+	return channels[midiChan];
 }
 
 const udpPort = new osc.UDPPort({
@@ -63,7 +103,11 @@ udpPort.on('message', oscMessage => {
 			clips[args[0]] = oscMessage.args
 			break;
 		case '/channelUpdate':
-			//call something like channels[args[0]].playFunction({all the variables the playfunction gets})
+			channels[args[0]].updateInfo(args[1]);
+			channels[args[0]].callPlay();
+			break;
+		default:
+			console.log("no handler for address ", address)
 	}
 });
 

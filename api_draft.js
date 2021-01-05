@@ -1,6 +1,8 @@
 const clips = {};
 
-
+getClip("stem");
+getClip("fill1");
+getClip("fill2");
 
 /*
 state - an arbitrary object associated with that channel where you 
